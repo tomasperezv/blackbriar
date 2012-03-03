@@ -1,0 +1,11 @@
+{ 
+    "DEFAULT_DOCUMENT": "index.html",
+	"DEFAULT_SECTION": "portfolio",
+	"DEV": false,
+    "PORT": 80,
+	"ADMIN_PORT": 443,
+    "NOT_FOUND": 0,
+    "SERVER_ERROR": 1,
+	"FORBIDDEN": 2,
+    "ROOT": ""
+}

@@ -1,0 +1,11 @@
+{
+	"blog": [
+		{
+			"domain": "blog.tomasperez.com"
+		},
+		{
+			"domain": "tomasperez.com",
+			"path": "blog"
+		}
+	]
+}
