@@ -35,8 +35,6 @@ this.serveRequest = function(request, response) {
 
 		var templateConfig = this.getTemplateConfig(filename, currentSection);
 
-		console.log('trying to serve ' + filename);
-
 		if ( templateConfig !== null) {
 			ServerCore.serveTemplate(filename, templateConfig, response);
 		} else {
