@@ -109,7 +109,7 @@ this.serveTemplate = function(fileName, config, response) {
 
 this.serve = function(fileName, response) {
 
-	var ServerCore = this;
+	var self = this;
 
 	if (this.constants.staticCache && typeof this.staticCache[fileName] !== 'undefined') {
 		console.log('reading from cache ' + fileName);
@@ -121,7 +121,7 @@ this.serve = function(fileName, response) {
 		path.exists(fileName, function(exists) {
 	
 			if(!exists) {
-				ServerCore.writeError(response, ServerCore.constants.notFound);
+				self.writeError(response, self.constants.notFound);
 				response.end();
 				return;
 			}
@@ -130,24 +130,24 @@ this.serve = function(fileName, response) {
 		
 				if(err) {
 		
-					ServerCore.writeError(response, ServerCore.constants.serverError, err);
+					self.writeError(response, self.constants.serverError, err);
 		
-				} else if ( ServerCore.canServe(fileName) ) {
+				} else if ( self.canServe(fileName) ) {
 	
 					try {
 	
 						console.log('Routing request for ' + fileName);
 	
-						ServerCore.writeHeader(response, fileName);
+						self.writeHeader(response, fileName);
 	
 						response.write(file, "binary");
-						ServerCore.staticCache[fileName] = file;
+						self.staticCache[fileName] = file;
 	
 					} catch (Error) {
 	
 						console.log('Error serving ' + fileName);
 	
-						ServerCore.writeHeader(response, ServerCore.constants.defaultDocument);
+						self.writeHeader(response, self.constants.defaultDocument);
 	
 						response.write(file, "binary");
 	
@@ -155,7 +155,7 @@ this.serve = function(fileName, response) {
 		
 				} else {
 					console.log('Trying to access to forbidden extension: ' + fileName);
-					ServerCore.writeError(response, ServerCore.constants.forbidden);
+					self.writeError(response, self.constants.forbidden);
 				}
 		
 				response.end();

@@ -28,12 +28,12 @@ this.serveRequest = function(request, response) {
 
 	} else {
 
-		var filename = this.getFileName(request);
+		var filename = this.getFileName(request),
+		domain = this.getDomain(request),
+		currentSection = this.getCurrentSection(domain),
+		templateConfig = this.getTemplateConfig(filename, currentSection);
 
-		var domain = this.getDomain(request);
-		var currentSection = this.getCurrentSection(domain);
-
-		var templateConfig = this.getTemplateConfig(filename, currentSection);
+		console.log([filename, domain, currentSection, templateConfig]);
 
 		if ( templateConfig !== null) {
 			ServerCore.serveTemplate(filename, templateConfig, response);
