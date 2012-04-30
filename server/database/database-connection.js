@@ -31,7 +31,33 @@ DataBaseConnection = function(config) {
 	}
 }
 
-DataBaseConnection.prototype.query = function() {
+/**
+ * Generic Query operation 
+ *
+ * @param String querystring
+ * @param callback onsuccess
+ */
+DataBaseConnection.prototype.query = function(querystring, onSuccess) {
+};
+
+/**
+ * Simple select operation in the DB.
+ *
+ * @param String queryString
+ * @param callback onsuccess
+ */
+DataBaseConnection.prototype.select = function(queryString, onSuccess) {
+	this.query(queryString, onSuccess);
+};
+
+/**
+ * Executes an insert in the DB.
+ *
+ * @param String queryString
+ * @param Function onSuccess
+ */
+DataBaseConnection.prototype.insert = function(queryString, onSuccess) {
+	this.query(queryString, onSuccess);
 };
 
 exports.DataBaseConnection = DataBaseConnection;

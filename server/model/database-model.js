@@ -14,7 +14,18 @@
  * 	console.log('created blog post: ' + id);
  * })
  */
-var SQLiteConnection = require('../database/sqlite-connection');
+
+/*
+ * Different strategies for accessing to the DB, can be used here:
+ * SQLiteConnection and PostgreSQLConnection, 
+ * 
+ * 	var DataBaseConnection = require('../database/sqlite-connection');
+ * 							 require('../database/postgresql-connection');
+ */
+
+// By default selecting the postgre sql connector.
+var DataBaseFactory = require('../database/database-factory');
+this.databaseType = DataBaseFactory.POSTGRE;
 
 DataBaseModel = function() {
 
@@ -62,11 +73,11 @@ DataBaseModel.prototype.load = function(filters, onSuccess, maxItems) {
 
 	console.log(this.lastQuery);
 
-	var sqliteConnection = new SQLiteConnection.SQLiteConnection(); 
+	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
 
 	var model = this;
 
-	sqliteConnection.select(this.lastQuery, function(rows) {
+	dataBaseConnection.select(this.lastQuery, function(rows) {
 		model.data = rows;
 		onSuccess(model);
 	});
@@ -82,9 +93,9 @@ DataBaseModel.prototype.createAndLoad = function(data, onSuccess) {
 
 		self.lastQuery = self.getLoadQuery({id: id}, 1);
 	
-		var sqliteConnection = new SQLiteConnection.SQLiteConnection(); 
+		var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
 	
-		sqliteConnection.select(self.lastQuery, function(rows) {
+		dataBaseConnection.select(self.lastQuery, function(rows) {
 			onSuccess(rows.length > 0 ? rows[0] : {});
 		});
 
@@ -107,13 +118,9 @@ DataBaseModel.prototype.create = function(data, onSuccess) {
 
 	this.lastQuery = this.getInsertQuery(data);
 
-	var sqliteConnection = new SQLiteConnection.SQLiteConnection(); 
-	sqliteConnection.insert(this.lastQuery, function() {
-		sqliteConnection.select('SELECT last_insert_rowid() as last_id;', function(row) {
-			if (row.length > 0) {
-				onSuccess(row[0]['last_id']);
-			}
-		});
+	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
+	dataBaseConnection.insert(this.lastQuery, function(result) {
+		onSuccess(result[0].id);
 	});
 };
 
@@ -122,8 +129,8 @@ DataBaseModel.prototype.update = function(data, onSuccess) {
 	this.lastQuery = this.getUpdateQuery(data);
 	console.log(this.lastQuery);
 
-	var sqliteConnection = new SQLiteConnection.SQLiteConnection(); 
-	sqliteConnection.insert(this.lastQuery, function() {
+	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
+	dataBaseConnection.insert(this.lastQuery, function() {
 		onSuccess(data);
 	});
 };
@@ -132,8 +139,8 @@ DataBaseModel.prototype.remove = function(data, onSuccess) {
 	this.lastQuery = this.getRemoveQuery(data);
 	console.log(this.lastQuery);
 
-	var sqliteConnection = new SQLiteConnection.SQLiteConnection(); 
-	sqliteConnection.select(this.lastQuery, function() {
+	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
+	dataBaseConnection.select(this.lastQuery, function() {
 		onSuccess(data.id);
 	});
 };
@@ -150,7 +157,7 @@ DataBaseModel.prototype.getInsertQuery = function(data) {
 
 	var query = 'INSERT INTO ' + this.table;
 
-	query += '(';
+	query += '(id, ';
 	var currentPosition = 0;
 	for (fieldName in data) {
 		query += fieldName;
@@ -164,7 +171,7 @@ DataBaseModel.prototype.getInsertQuery = function(data) {
 
 	query += ')';
 
-	query += ' VALUES(';
+	query += ' VALUES(DEFAULT, ';
 
 	currentPosition = 0;
 
@@ -173,7 +180,7 @@ DataBaseModel.prototype.getInsertQuery = function(data) {
 		var value = data[fieldName];
 
 		if (typeof value === 'string') {
-			query += '"' + value + '"';
+			query += '\'' + value + '\'';
 		} else {
 			query += value;
 		}
@@ -185,7 +192,7 @@ DataBaseModel.prototype.getInsertQuery = function(data) {
 		}
 	}
 	
-	query += ');';
+	query += ') RETURNING id;';
 
 	return query;	
 };
@@ -239,7 +246,7 @@ DataBaseModel.prototype.getLoadQuery = function(filters, maxItems, orderBy) {
 	var query = 'SELECT * FROM ' + this.table + ' WHERE ';
 
 	if (Object.keys(filters).length === 0) {
-		query += '1';
+		query += 'TRUE';
 	} else {
 
 		var first = true;

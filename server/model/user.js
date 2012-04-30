@@ -57,6 +57,13 @@ User.prototype.validate = function(login, password, callback) {
 	var self = this;
 
 	this.getByLogin(login, function(user) {
+
+		if (typeof user.id === 'undefined') {
+			console.log('Invalid user ' + login);
+			return callback({});
+		}
+		console.log('continue...' + login + ' ' + user.id);
+
 		// Get the salt
 		var salt = new Salt();
 		salt.load({user_id:user.id}, function(results) {
