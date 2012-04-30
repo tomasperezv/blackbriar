@@ -33,8 +33,6 @@ this.serveRequest = function(request, response) {
 		currentSection = this.getCurrentSection(domain),
 		templateConfig = this.getTemplateConfig(filename, currentSection);
 
-		console.log([filename, domain, currentSection, templateConfig]);
-
 		if ( templateConfig !== null) {
 			ServerCore.serveTemplate(filename, templateConfig, response);
 		} else {
@@ -175,7 +173,7 @@ this.getPort = function(host) {
 
 	var port = null;
 
-	if (host !== null) {
+	if (typeof host !== 'undefined') {
 		var result = host.match(/:[0-9]*/);
 
 		if (result !== null && result.length > 0) {
