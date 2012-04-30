@@ -174,10 +174,13 @@ this.getDomain = function(request) {
 this.getPort = function(host) {
 
 	var port = null;
-	var result = host.match(/:[0-9]*/);
 
-	if (result !== null && result.length > 0) {
-		port = result[0].replace(/:/, '');
+	if (host !== null) {
+		var result = host.match(/:[0-9]*/);
+
+		if (result !== null && result.length > 0) {
+			port = result[0].replace(/:/, '');
+		}
 	}
 
 	return port;
