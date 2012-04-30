@@ -216,7 +216,7 @@ DataBaseModel.prototype.getUpdateQuery = function(data) {
 		query += fieldName + ' = ';
 
 		if (typeof value === 'string') {
-			query += '"' + value + '"';
+			query += '\'' + value + '\'';
 		} else {
 			query += value;
 		}
