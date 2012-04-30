@@ -156,18 +156,19 @@ this.getFileName = function(request) {
 
 this.getDomain = function(request) {
 
-	var requestUrl = request.headers['host'];
-	
 	var domain = null;
 
-	var result = requestUrl.match(/[^:0-9]*/);
+	var requestUrl = request.headers['host'];
+	if( typeof requestUrl !== 'undefined') {
 
-	if (result.length > 0) {
-		domain = result[0];
+		var result = requestUrl.match(/[^:0-9]*/);
+
+		if (result.length > 0) {
+			domain = result[0];
+		}
 	}
-
-	return domain;
 	
+	return domain;
 };
 
 this.getPort = function(host) {

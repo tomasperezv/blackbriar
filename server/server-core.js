@@ -92,9 +92,10 @@ this.serveTemplate = function(fileName, config, response) {
 	
 				// Get template data
 				TemplateEngine.processData(config, function(data) {
+
 					ServerCore.writeHeader(response, templateName);
 		
-					var template = Handlebars.compile(ServerCore.staticCache[templateName]);
+					var template = Handlebars.compile(ServerCore.staticCache[templateName], {noEscape: true});
 					var output = template(data);
 		
 					response.write(output, "binary");
