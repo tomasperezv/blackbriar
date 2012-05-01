@@ -37,8 +37,6 @@ Logger.get = function(type) {
 	
 	if (typeof this.instance[type] === 'undefined') {
 
-		console.log('instantiating logger');
-
 		switch(type) {
 			case this.DEFAULT:
 				this.instance[type] = new Logger();
@@ -49,8 +47,6 @@ Logger.get = function(type) {
 				break;
 		}
 
-	} else {
-		console.log('using logger instance from cache');
 	}
 
 	return this.instance[type];
