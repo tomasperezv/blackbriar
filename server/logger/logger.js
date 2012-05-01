@@ -13,15 +13,33 @@ Logger.SENTRY = 'sentry';
 Logger.instance = [];
 
 Logger.prototype.logError = function(err) {
-	console.log(err);
+	console.log([this.getPrefix(), err]);
 };
 
 Logger.prototype.logMessage = function(message) {
-	console.log(message);
+	console.log(this.getPrefix() + message);
 };
 
 Logger.prototype.logQuery = function(queryString) {
-	console.log(queryString);
+	console.log(this.getPrefix() + queryString);
+};
+
+Logger.prototype.getPrefix = function() {
+
+	currentTime = new Date()
+
+	var month = currentTime.getMonth() + 1,
+		day = currentTime.getDate(),
+		year = currentTime.getFullYear(),
+		hours = currentTime.getHours(),
+		minutes = currentTime.getMinutes(),
+		seconds = currentTime.getSeconds();
+
+	if (minutes < 10){
+		minutes = "0" + minutes;
+	};
+
+	return '[' + day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds +  '] ' ;
 };
 
 Logger.get = function(type) {
