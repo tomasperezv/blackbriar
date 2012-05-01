@@ -1,11 +1,17 @@
 { 
-    "DEFAULT_DOCUMENT": "index.html",
-	"DEFAULT_SECTION": "portfolio",
-	"DEV": false,
-    "PORT": 80,
-	"ADMIN_PORT": 443,
-    "NOT_FOUND": 0,
-    "SERVER_ERROR": 1,
-	"FORBIDDEN": 2,
-    "ROOT": ""
+    "defaultDocument": "index.html",
+	"defaultSection": "portfolio",
+	"dev": true,
+    "port": 80,
+	"adminPort": 443,
+    "notFound": 0,
+    "serverError": 1,
+	"forbidden": 2,
+    "root": "",
+	"sslKey": "./config/ssl/privatekey.pem",
+	"sslCert": "./config/ssl/certificate.pem",
+	"staticDomain": "",
+	"staticCache": false,
+	"logger": "console",
+	"loggerDSN": ""
 }
