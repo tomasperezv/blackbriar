@@ -6,7 +6,8 @@ var http = require("http"),
 	https = require('https'),
 	fs = require('fs'),
 	Config = require("./server/config.js"),
-	Router = require('./server/router.js');
+	Router = require('./server/router.js'),
+	Logger = require('./server/logger/logger').Logger.get();
 
 /**
  * Config options
@@ -27,7 +28,7 @@ http.createServer(function(request, response) {
 
 }).listen( serverConf.port );
 
-console.log("HTTP server running at " + serverConf.port + " port.");
+Logger.logMessage("HTTP server running at " + serverConf.port + " port.");
 
 /**
  * SSL server
@@ -38,4 +39,4 @@ https.createServer(options, function (request, response) {
 
 }).listen( serverConf.adminPort );
 
-console.log("SSL server running at " + serverConf.adminPort + " port.");
+Logger.logMessage("SSL server running at " + serverConf.adminPort + " port.");

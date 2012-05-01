@@ -6,7 +6,8 @@ var	path = require("path"),
 	fs = require('fs'),
 	ServerCore = require("./server-core.js"),
 	Config = require("./config.js"),
-	Api = require("../www/api.js");
+	Api = require("../www/api.js"),
+	Logger = require('./logger/logger').Logger.get();
 
 this.config = {
 	domains: Config.get('domains'),
@@ -23,7 +24,7 @@ this.serveRequest = function(request, response) {
 
 	if (this.isApiRequest(request)) {
 
-		console.log('Api request...');
+		Logger.logMessage('Api request...');
 		Api.serve(request, response);
 
 	} else {
@@ -144,7 +145,7 @@ this.getFileName = function(request) {
 	if (currentSection == '' || typeof this.config.allowedFolders[currentSection] === 'undefined') {
 		// Fix the current section
 		currentSection = this.config.server.defaultSection;
-		console.log('Invalid or default section, fixing to ' + currentSection);
+		Logger.logMessage('Invalid or default section, fixing to ' + currentSection);
 	}
 
 	var filename = this.generateFileName(url, currentSection);

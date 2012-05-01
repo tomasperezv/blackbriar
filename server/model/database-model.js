@@ -24,7 +24,9 @@
  */
 
 // By default selecting the postgre sql connector.
-var DataBaseFactory = require('../database/database-factory');
+var DataBaseFactory = require('../database/database-factory'),
+	Logger = require('../logger/logger').Logger.get('console');
+
 this.databaseType = DataBaseFactory.POSTGRE;
 
 DataBaseModel = function() {
@@ -71,7 +73,7 @@ DataBaseModel.prototype.load = function(filters, onSuccess, maxItems) {
 	
 	this.lastQuery = this.getLoadQuery(filters, maxItems);
 
-	console.log(this.lastQuery);
+	Logger.logQuery(this.lastQuery);
 
 	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
 
@@ -127,7 +129,8 @@ DataBaseModel.prototype.create = function(data, onSuccess) {
 DataBaseModel.prototype.update = function(data, onSuccess) {
 
 	this.lastQuery = this.getUpdateQuery(data);
-	console.log(this.lastQuery);
+
+	Logger.logQuery(this.lastQuery);
 
 	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
 	dataBaseConnection.insert(this.lastQuery, function() {
@@ -137,7 +140,7 @@ DataBaseModel.prototype.update = function(data, onSuccess) {
 
 DataBaseModel.prototype.remove = function(data, onSuccess) {
 	this.lastQuery = this.getRemoveQuery(data);
-	console.log(this.lastQuery);
+	Logger.logQuery(this.lastQuery);
 
 	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
 	dataBaseConnection.select(this.lastQuery, function() {

@@ -13,7 +13,8 @@ var fs = require('fs'),
 	Config = require("./config.js"),
 	Handlebars = require('handlebars'),
 	TemplateEngine = require('../www/template-engine.js'),
-	Router = require('./router.js');
+	Router = require('./router.js'),
+	Logger = require('./logger/logger').Logger.get();
 
 this.staticCache = [];
 
@@ -71,7 +72,7 @@ this.serveTemplate = function(fileName, config, response) {
 
 	if (this.constants.staticCache && typeof this.staticCache[templateName] !== 'undefined') {
 
-		console.log('reading template from cache ' + templateName);
+		Logger.logMessage('reading template from cache ' + templateName);
 		this.writeHeader(response, templateName);
 		var template = Handlebars.compile(this.staticCache[templateName]);
 
@@ -84,9 +85,9 @@ this.serveTemplate = function(fileName, config, response) {
 	} else {
 		fs.readFile(templateName, "binary", function(err, template) {
 			if (err) {
-				console.log('Template not found');
+				Logger.logMessage('Template not found');
 			} else {
-				console.log('serving template ' + templateName);
+				Logger.logMessage('serving template ' + templateName);
 
 				ServerCore.staticCache[templateName] = template;
 	
@@ -113,7 +114,7 @@ this.serve = function(fileName, response) {
 	var self = this;
 
 	if (this.constants.staticCache && typeof this.staticCache[fileName] !== 'undefined') {
-		console.log('reading from cache ' + fileName);
+		Logger.logMessage('reading from cache ' + fileName);
 		this.writeHeader(response, fileName);
 		response.write(this.staticCache[fileName], "binary");
 		response.end();
@@ -137,7 +138,7 @@ this.serve = function(fileName, response) {
 	
 					try {
 	
-						console.log('Routing request for ' + fileName);
+						Logger.logMessage('Routing request for ' + fileName);
 	
 						self.writeHeader(response, fileName);
 	
@@ -146,7 +147,7 @@ this.serve = function(fileName, response) {
 	
 					} catch (Error) {
 	
-						console.log('Error serving ' + fileName);
+						Logger.logError(Error);
 	
 						self.writeHeader(response, self.constants.defaultDocument);
 	
@@ -155,7 +156,7 @@ this.serve = function(fileName, response) {
 					}
 		
 				} else {
-					console.log('Trying to access to forbidden extension: ' + fileName);
+					Logger.logMessage('Trying to access to forbidden extension: ' + fileName);
 					self.writeError(response, self.constants.forbidden);
 				}
 		

@@ -3,3 +3,4 @@ config
 www
 database-setup
 *.swp
+node_modules
