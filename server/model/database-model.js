@@ -65,13 +65,13 @@ DataBaseModel.prototype.getData = function() {
  * @param Function onSuccess
  * @param Integer maxItems 
  */
-DataBaseModel.prototype.load = function(filters, onSuccess, maxItems) {
+DataBaseModel.prototype.load = function(filters, onSuccess, maxItems, orderBy, offset) {
 
 	if (typeof filters === 'undefined') {
 		var filters = {};
 	}
 	
-	this.lastQuery = this.getLoadQuery(filters, maxItems);
+	this.lastQuery = this.getLoadQuery(filters, maxItems, orderBy, offset);
 
 	Logger.logQuery(this.lastQuery);
 
@@ -147,6 +147,17 @@ DataBaseModel.prototype.remove = function(data, onSuccess) {
 		onSuccess(data.id);
 	});
 };
+
+DataBaseModel.prototype.count = function(onSuccess) {
+	this.lastQuery = this.getCountQuery();
+	Logger.logQuery(this.lastQuery);
+
+	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
+	dataBaseConnection.select(this.lastQuery, function(rows) {
+		var count = rows.length > 0 ? rows[0].count : 0;
+		onSuccess(count);
+	});
+}
 
 /**
  * Builds an insert query.
@@ -244,7 +255,7 @@ DataBaseModel.prototype.getUpdateQuery = function(data) {
  * @param Object filters 
  * @param Integer maxItems 
  */
-DataBaseModel.prototype.getLoadQuery = function(filters, maxItems, orderBy) {
+DataBaseModel.prototype.getLoadQuery = function(filters, maxItems, orderBy, offset) {
 
 	var query = 'SELECT * FROM ' + this.table + ' WHERE ';
 
@@ -266,17 +277,28 @@ DataBaseModel.prototype.getLoadQuery = function(filters, maxItems, orderBy) {
 		}
 	}
 
+	if (typeof orderBy !== 'undefined') {
+		query += ' ORDER BY ' + orderBy.column + " " + orderBy.type;
+	}
+
 	if (typeof maxItems !== 'undefined') {
 		query += ' LIMIT ' + maxItems;
 	}
 
-	if (typeof orderBy !== 'undefined') {
-		query += 'ORDER BY ' + "'" + orderBy.column + "' " + orderBy.type;
+	if (typeof offset !== 'undefined') {
+		query += ' OFFSET ' + offset;
 	}
 
 	query += ';';
 
 	return query;
+};
+
+/**
+ * Count the number of rows in a table
+ */
+DataBaseModel.prototype.getCountQuery = function() {
+	return 'SELECT COUNT(*) FROM ' + this.table + ';';
 };
 
 DataBaseModel.prototype.getRandomString = function() {
