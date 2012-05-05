@@ -62,7 +62,6 @@ User.prototype.validate = function(login, password, callback) {
 			console.log('Invalid user ' + login);
 			return callback({});
 		}
-		console.log('continue...' + login + ' ' + user.id);
 
 		// Get the salt
 		var salt = new Salt();

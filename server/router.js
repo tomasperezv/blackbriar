@@ -17,6 +17,10 @@ this.config = {
 	templates: Config.get('templates')
 }
 
+this.REGEX_DOMAIN = /[a-z0-9.]*/i;
+this.REGEX_PORT = /:[\d]*/;
+this.REGEX_SLUG = /\/([a-z]*)\/([a-z]*)/i;
+
 /**
  * @author tom@0x101.com
  */
@@ -30,24 +34,29 @@ this.serveRequest = function(request, response) {
 	} else {
 
 		var filename = this.getFileName(request),
-		domain = this.getDomain(request),
-		currentSection = this.getCurrentSection(domain),
-		templateConfig = this.getTemplateConfig(filename, currentSection);
+			domain = this.getDomain(request),
+			domainInfo = this.parseDomain(domain),
+			section = this._getSection(domainInfo),
+			templateConfig = this.getTemplateConfig(request, filename, section),
+			slugInfo = this.getSlugInfo(request.url);
 
 		if ( templateConfig !== null) {
-			ServerCore.serveTemplate(filename, templateConfig, response);
+			ServerCore.serveTemplate(filename, templateConfig, response, slugInfo);
 		} else {
-			ServerCore.serve(filename, response);
+			ServerCore.serve(filename, response, slugInfo);
 		}
 	}
 };
 
-this.getTemplateConfig = function(filename, section) {
-	var config = null;
+this.getTemplateConfig = function(request, filename, section) {
 
-	var templatesConfig = this.config.templates;
+	var domain = this.getDomain(request),
+		domainInfo = this.parseDomain(domain),
+		slug = domainInfo != null ? domainInfo.slug : false,
+		config = null,
+		templatesConfig = this.config.templates,
+		sectionPath = filename.split('/');
 
-	var sectionPath = filename.split('/');
 	sectionPath = sectionPath.length > 2 ? sectionPath[sectionPath.length-2] : '';
 
 	var basename = filename.replace(/^.*[\/\\]/g, '');
@@ -67,9 +76,9 @@ this.getBaseTemplateConfig = function(section, sectionPath, basename, requireSec
 		var requireSection = true;
 	}
 
-	var templatesConfig = this.config.templates;
+	var templatesConfig = this.config.templates,
+		config = null;
 
-	var config = null;
 	if (typeof templatesConfig[section] !== 'undefined' && typeof templatesConfig[section][basename] !== 'undefined') {
 		if ((requireSection && section === sectionPath) || !requireSection) {
 			config = templatesConfig[section][basename];
@@ -83,34 +92,110 @@ this.isApiRequest = function(request) {
 	return this.getDomain(request) === this.config.api.domain;
 };
 
-this.getCurrentSection = function(domain) {
+this.parseDomain = function(domain) {
+	var result = null;
 
-	var currentSection = '';
-
-	// TODO: Optimize the loop, the info should be stored in a more optimal 
-	// data structure
-
-	// TODO: Also add support for the path
 	for (var section in this.config.domains) {
 
 		var nSubSections = this.config.domains[section].length;
 
 		for (var i = 0; i < nSubSections; i++) {
 			if (this.config.domains[section][i].domain == domain) {
-				currentSection = section;
+				result = {
+					section: section,
+					slug: typeof this.config.domains[section][i]['slug'] !== 'undefined' ? this.config.domains[section][i]['slug'] : false
+				};
 				break;
 			}
 		}
 
-		if (currentSection !== '') {
+		if (result !== null) {
 			break;
 		}
 	}
 
-	return currentSection;
+	return result;
 };
 
-this.generateFileName = function(requestUrl, currentSection) {
+/**
+ * Returns the real path of the file that we want to serve, depending on the
+ * domains.json file
+ */
+this.getFileName = function(request) {
+
+	var url = request.url,
+		domain = this.getDomain(request),
+		port = this.getPort(request),
+		domainInfo = this.parseDomain(domain),
+		section = this._getSection(domainInfo),
+		slug = domainInfo != null ? domainInfo.slug : false;
+
+	if (section == '' || typeof this.config.allowedFolders[section] === 'undefined') {
+		// Fix the current section
+		section = this.config.server.defaultSection;
+		Logger.logMessage('Invalid or default section, fixing to ' + section);
+	} else if (slug) {
+		// A section with the slug config activated, will follow this
+		// pattern: 'blog.0x101.com/category/slug'
+		// We need to remove here from the url in order to generate the
+		// right filename
+		url = url.replace(/\/[a-z]*\/[a-z]*/i, '');
+	}
+
+	return this._generateFileName(url, section);
+};
+
+this.getSlugInfo = function(url) {
+	var parts = url.match(this.REGEX_SLUG);
+	if (parts != null && parts.length > 2) {
+		parts = {
+			category: parts[1],
+			slug: parts[2]
+		};
+	}
+	return parts;
+};
+
+this.getDomain = function(request) {
+	return this._regexDomain(request, this.REGEX_DOMAIN);
+};
+
+this.getPort = function(request) {
+	var result = this._regexDomain(request, this.REGEX_PORT),
+		port = null;
+
+	if (result !== null && result.length > 0) {
+		port = result.substr(1);
+	}
+
+	return port;
+};
+
+this.devMode = function(request) {
+	return this.config.server.dev;
+};
+
+this._getSection = function(domainInfo) {
+	return domainInfo != null ? domainInfo.section : '';
+};
+
+this._regexDomain = function(request, regex) {
+	var result = null,
+		requestUrl = request.headers['host'];
+	if( typeof requestUrl !== 'undefined') {
+
+		var extract = requestUrl.match(regex);
+
+		if (extract !== null && extract.length > 0) {
+			result = extract[0];
+		}
+	}
+	
+	return result;
+
+};
+
+this._generateFileName = function(requestUrl, currentSection) {
 	var filename = path.join(process.cwd(), 'www/' + currentSection);
 
 	filename = path.join(filename, requestUrl);
@@ -124,75 +209,5 @@ this.generateFileName = function(requestUrl, currentSection) {
 	} catch(e) {
 	}
 
-	return filename;
-};
-
-/**
- * Returns the real path of the file that we want to serve, depending on the
- * domains-conf.json file
- */
-this.getFileName = function(request) {
-
-	var requestUrl = request.headers['host'];
-
-	var domain = this.getDomain(request);
-	var port = this.getPort(requestUrl);
-
-	var url = (request.url == '/' ? ServerCore.constants.DEFAULT_DOCUMENT : request.url);
-
-	var currentSection = this.getCurrentSection(domain);
-
-	if (currentSection == '' || typeof this.config.allowedFolders[currentSection] === 'undefined') {
-		// Fix the current section
-		currentSection = this.config.server.defaultSection;
-		Logger.logMessage('Invalid or default section, fixing to ' + currentSection);
-	}
-
-	var filename = this.generateFileName(url, currentSection);
-
-	return filename;
-};
-
-this.getDomain = function(request) {
-
-	var domain = null;
-
-	var requestUrl = request.headers['host'];
-	if( typeof requestUrl !== 'undefined') {
-
-		var result = requestUrl.match(/[^:0-9]*/);
-
-		if (result.length > 0) {
-			domain = result[0];
-		}
-	}
-	
-	return domain;
-};
-
-this.getPort = function(host) {
-
-	var port = null;
-
-	if (typeof host !== 'undefined') {
-		var result = host.match(/:[0-9]*/);
-
-		if (result !== null && result.length > 0) {
-			port = result[0].replace(/:/, '');
-		}
-	}
-
-	return port;
-};
-
-/**
- * TODO: Improve security
- * @author tom@0x101.com 
- */
-this.isAdmin = function(request) {
-	return request.connection.remoteAddress === '127.0.0.1';
-};
-
-this.devMode = function(request) {
-	return this.config.server.dev;
+	return filename.replace(/\/\//, '/');
 };

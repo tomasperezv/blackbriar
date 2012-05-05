@@ -64,7 +64,7 @@ this.writeError = function(response, errorCode, err) {
 	response.write(content);
 };
 
-this.serveTemplate = function(fileName, config, response) {
+this.serveTemplate = function(fileName, config, response, slugInfo) {
 
 	var ServerCore = this;
 
@@ -77,7 +77,7 @@ this.serveTemplate = function(fileName, config, response) {
 		var template = Handlebars.compile(this.staticCache[templateName]);
 
 		// Get template data
-		var data = TemplateEngine.processData(config);
+		var data = TemplateEngine.processData(config, slugInfo);
 		var output = template(data);
 		response.write(output, "binary");
 		response.end();
@@ -92,7 +92,7 @@ this.serveTemplate = function(fileName, config, response) {
 				ServerCore.staticCache[templateName] = template;
 	
 				// Get template data
-				TemplateEngine.processData(config, function(data) {
+				TemplateEngine.processData(config, slugInfo, function(data) {
 
 					ServerCore.writeHeader(response, templateName);
 		
@@ -109,7 +109,7 @@ this.serveTemplate = function(fileName, config, response) {
 
 };
 
-this.serve = function(fileName, response) {
+this.serve = function(fileName, response, slugInfo) {
 
 	var self = this;
 

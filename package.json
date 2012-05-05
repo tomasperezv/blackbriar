@@ -1,0 +1,11 @@
+{
+	"name": "blackbriar",
+	"version": "0.0.2",
+	"author": "Tomas Perez <tom@0x101.com>",
+	"dependencies": {
+		"nodeunit": "*"
+	},
+	"engine": {
+		"node": ">0.5"
+	}
+}
