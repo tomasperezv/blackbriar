@@ -38,9 +38,9 @@ exports['parseDomain'] = function(test) {
 
 	test.strictEqual(Router.parseDomain('invalid.0x101.com'), null);
 	test.strictEqual(Router.parseDomain(null), null);
-	test.deepEqual(Router.parseDomain('main.0x101.com'), {section: 'main', slug: false});
-	test.deepEqual(Router.parseDomain('blog.0x101.com'), {section: 'main', slug: true});
-	test.deepEqual(Router.parseDomain('static.0x101.com'), {section:'static', slug: false});
+	test.deepEqual(Router.parseDomain('main.0x101.com'), {section: 'main', slug: false, slugPrefix: ''});
+	test.deepEqual(Router.parseDomain('blog.0x101.com'), {section: 'main', slug: true, slugPrefix: '/post/'});
+	test.deepEqual(Router.parseDomain('static.0x101.com'), {section:'static', slug: false , slugPrefix: ''});
 
 	test.done();
 };
@@ -83,8 +83,12 @@ exports['getFileName'] = function(test) {
 	test.equal(Router.getFileName(request), '/blackbriar/www/main/invalid/folder/data.html');
 
 	request.setDomain('blog.0x101.com');
-	request.setUrl('/category/slug');
+	request.setUrl('/post/category/slug');
 	test.equal(Router.getFileName(request), '/blackbriar/www/main/');
+
+	request.setDomain('blog.0x101.com');
+	request.setUrl('/category/slug');
+	test.equal(Router.getFileName(request), '/blackbriar/www/main/category/slug');
 
 	test.done();
 };

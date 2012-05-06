@@ -28,7 +28,8 @@ this.get = function() {
 			},
 			{
 				"domain": "blog.0x101.com",
-				"slug": true
+				"slug": true,
+				"slugPrefix": "/post/"
 			}
 		],
 		"static": 

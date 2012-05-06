@@ -19,7 +19,9 @@ this.config = {
 
 this.REGEX_DOMAIN = /[a-z0-9.]*/i;
 this.REGEX_PORT = /:[\d]*/;
-this.REGEX_SLUG = /\/([a-z]*)\/([a-z]*)/i;
+this.REGEX_SLUG = /\/([0-9\-a-z]*)\/([0-9\-a-z]*)/i;
+this.REGEX_SLUG_SIMPLE = /\/[0-9\-a-z]*\/[0-9\-a-z]*/i;
+this.REGEX_SLUG_PREFIX = /^\/[\-a-z0-9]*\//i;
 
 /**
  * @author tom@0x101.com
@@ -38,7 +40,7 @@ this.serveRequest = function(request, response) {
 			domainInfo = this.parseDomain(domain),
 			section = this._getSection(domainInfo),
 			templateConfig = this.getTemplateConfig(request, filename, section),
-			slugInfo = this.getSlugInfo(request.url);
+			slugInfo = this.getSlugInfo(request.url, domainInfo);
 
 		if ( templateConfig !== null) {
 			ServerCore.serveTemplate(filename, templateConfig, response, slugInfo);
@@ -103,7 +105,8 @@ this.parseDomain = function(domain) {
 			if (this.config.domains[section][i].domain == domain) {
 				result = {
 					section: section,
-					slug: typeof this.config.domains[section][i]['slug'] !== 'undefined' ? this.config.domains[section][i]['slug'] : false
+					slug: typeof this.config.domains[section][i]['slug'] !== 'undefined' ? this.config.domains[section][i]['slug'] : false,
+					slugPrefix: typeof this.config.domains[section][i]['slugPrefix'] !== 'undefined' ? this.config.domains[section][i]['slugPrefix'] : ''
 				};
 				break;
 			}
@@ -136,16 +139,37 @@ this.getFileName = function(request) {
 		Logger.logMessage('Invalid or default section, fixing to ' + section);
 	} else if (slug) {
 		// A section with the slug config activated, will follow this
-		// pattern: 'blog.0x101.com/category/slug'
+		// pattern: 'blog.0x101.com/post/category/slug'
 		// We need to remove here from the url in order to generate the
 		// right filename
-		url = url.replace(/\/[a-z]*\/[a-z]*/i, '');
+		url = this._removeSlugPrefix(url, domainInfo, true);
 	}
 
 	return this._generateFileName(url, section);
 };
 
-this.getSlugInfo = function(url) {
+this._removeSlugPrefix = function(url, domainInfo, removeSlug) {
+
+	if (typeof removeSlug === 'undefined') {
+		var removeSlug = false;
+	}
+
+	if (domainInfo != null) {
+		var searchSlugPrefix = url.match(this.REGEX_SLUG_PREFIX);
+		if (searchSlugPrefix != null && searchSlugPrefix.length > 0 && searchSlugPrefix[0] == domainInfo.slugPrefix ) {
+			url = '/' + url.replace(this.REGEX_SLUG_PREFIX, '');
+			if (removeSlug) {
+				url = url.replace(this.REGEX_SLUG_SIMPLE, '');
+			}
+		}
+	}
+
+	return url;
+};
+
+this.getSlugInfo = function(url, domainInfo) {
+
+	url = this._removeSlugPrefix(url, domainInfo);
 	var parts = url.match(this.REGEX_SLUG);
 	if (parts != null && parts.length > 2) {
 		parts = {
@@ -153,6 +177,7 @@ this.getSlugInfo = function(url) {
 			slug: parts[2]
 		};
 	}
+
 	return parts;
 };
 

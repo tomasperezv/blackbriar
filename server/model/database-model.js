@@ -266,15 +266,24 @@ DataBaseModel.prototype.getLoadQuery = function(filters, maxItems, orderBy, offs
 		var first = true;
 		
 		for (fieldName in filters) {
-
-			if (!first) {
-				query += ' AND ';
+			
+			if (filters[fieldName] != undefined) {
+				if (!first) {
+					query += ' AND ';
+				}
+	
+				query += fieldName + ' = ' + "'" + filters[fieldName] + "'";	
+	
+				first = false;
 			}
 
-			query += fieldName + ' = ' + "'" + filters[fieldName] + "'";	
-
-			first = false;
 		}
+
+		if (first) {
+			// No valid filters applied
+			query += 'TRUE';
+		}
+
 	}
 
 	if (typeof orderBy !== 'undefined') {
