@@ -66,6 +66,8 @@ function FileTypeCSS(url) {
 		rel: "stylesheet",
 		href: url
 	};
+
+	this.header = {"Content-Type": "text/css"};
 }
 
 FileTypeCSS.prototype = new FileType();

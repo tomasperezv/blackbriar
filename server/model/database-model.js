@@ -148,8 +148,8 @@ DataBaseModel.prototype.remove = function(data, onSuccess) {
 	});
 };
 
-DataBaseModel.prototype.count = function(onSuccess) {
-	this.lastQuery = this.getCountQuery();
+DataBaseModel.prototype.count = function(filters, onSuccess) {
+	this.lastQuery = this.getCountQuery(filters);
 	Logger.logQuery(this.lastQuery);
 
 	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
@@ -257,7 +257,30 @@ DataBaseModel.prototype.getUpdateQuery = function(data) {
  */
 DataBaseModel.prototype.getLoadQuery = function(filters, maxItems, orderBy, offset) {
 
-	var query = 'SELECT * FROM ' + this.table + ' WHERE ';
+	var query = 'SELECT * FROM ' + this.table + ' WHERE ',
+		query = this._applyFilters(query, filters);
+
+	if (typeof orderBy !== 'undefined') {
+		query += ' ORDER BY ' + orderBy.column + " " + orderBy.type;
+	}
+
+	if (typeof maxItems !== 'undefined') {
+		query += ' LIMIT ' + maxItems;
+	}
+
+	if (typeof offset !== 'undefined') {
+		query += ' OFFSET ' + offset;
+	}
+
+	query += ';';
+
+	return query;
+};
+
+/**
+ * Extend a query adding information about field filters.
+ */
+DataBaseModel.prototype._applyFilters = function(query, filters) {
 
 	if (Object.keys(filters).length === 0) {
 		query += 'TRUE';
@@ -286,28 +309,18 @@ DataBaseModel.prototype.getLoadQuery = function(filters, maxItems, orderBy, offs
 
 	}
 
-	if (typeof orderBy !== 'undefined') {
-		query += ' ORDER BY ' + orderBy.column + " " + orderBy.type;
-	}
-
-	if (typeof maxItems !== 'undefined') {
-		query += ' LIMIT ' + maxItems;
-	}
-
-	if (typeof offset !== 'undefined') {
-		query += ' OFFSET ' + offset;
-	}
-
-	query += ';';
-
 	return query;
 };
 
 /**
  * Count the number of rows in a table
  */
-DataBaseModel.prototype.getCountQuery = function() {
-	return 'SELECT COUNT(*) FROM ' + this.table + ';';
+DataBaseModel.prototype.getCountQuery = function(filters) {
+	var query = 'SELECT COUNT(*) FROM ' + this.table + ' WHERE ',
+		query = this._applyFilters(query, filters);
+
+	query += ';';
+	return query;
 };
 
 DataBaseModel.prototype.getRandomString = function() {
