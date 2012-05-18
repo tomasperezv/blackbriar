@@ -33,7 +33,7 @@ this.staticDomain = function() {
 };
 
 this.apiDomain = function() {
-	return this.api.domain + ':' + this.constants.adminPort;
+	return this.api.domain + ':' + this.constants.port;
 };
 
 this.writeError = function(response, errorCode, err) {

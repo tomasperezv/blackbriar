@@ -347,4 +347,15 @@ DataBaseModel.prototype.getTimestamp = function() {
 	return Math.round((new Date()).getTime() / 1000);
 };
 
+DataBaseModel.prototype.formatDate = function(timestamp) {
+	var date = new Date(timestamp*1000),
+		hours = date.getHours(),
+		minutes = date.getMinutes(),
+		seconds = date.getSeconds(),
+		day = date.getDay() + 1,
+		month = date.getMonth() + 1,
+		year = date.getFullYear();
+	return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
+};
+
 exports.DataBaseModel = DataBaseModel;
