@@ -12,7 +12,7 @@ var fs = require('fs'),
 	FileType = require("../fw/loader/file-type.js").FileType,
 	Config = require("./config.js"),
 	Handlebars = require('handlebars'),
-	TemplateEngine = require('../www/template-engine.js'),
+	Controller = require('../www/controller.js'),
 	Router = require('./router.js'),
 	Logger = require('./logger/logger').Logger.get();
 
@@ -32,8 +32,11 @@ this.staticDomain = function() {
 	return this.constants.staticDomain + ':' + this.constants.port;
 };
 
-this.apiDomain = function() {
-	return this.api.domain + ':' + this.constants.port;
+this.apiDomain = function(secure) {
+	if (typeof secure === 'undefined') {
+		secure = false;
+	}
+	return this.api.domain + ':' + (!secure ? this.constants.port : this.constants.adminPort);
 };
 
 this.writeError = function(response, errorCode, err) {
@@ -77,7 +80,7 @@ this.serveTemplate = function(fileName, config, response, slugInfo) {
 		var template = Handlebars.compile(this.staticCache[templateName]);
 
 		// Get template data
-		var data = TemplateEngine.processData(config, slugInfo);
+		var data = Controller.processData(config, slugInfo);
 		var output = template(data);
 		response.write(output, "binary");
 		response.end();
@@ -92,12 +95,12 @@ this.serveTemplate = function(fileName, config, response, slugInfo) {
 				ServerCore.staticCache[templateName] = template;
 	
 				// Get template data
-				TemplateEngine.processData(config, slugInfo, function(data) {
+				Controller.processData(config, slugInfo, function(data) {
 
 					ServerCore.writeHeader(response, templateName);
 		
-					var template = Handlebars.compile(ServerCore.staticCache[templateName], {noEscape: true});
-					var output = template(data);
+					var template = Handlebars.compile(ServerCore.staticCache[templateName], {noEscape: true}),
+						output = template(data);
 		
 					response.write(output, "binary");
 		
