@@ -29,14 +29,28 @@ this.writeHeader = function(response, filename) {
 };
 
 this.staticDomain = function() {
-	return this.constants.staticDomain + ':' + this.constants.port;
+	var result = this.constants.staticDomain;
+
+	if (this.constants.port != '80') {
+		result += ':' + this.constants.port;
+	}
+
+	return result;
 };
 
 this.apiDomain = function(secure) {
 	if (typeof secure === 'undefined') {
 		secure = false;
 	}
-	return this.api.domain + ':' + (!secure ? this.constants.port : this.constants.adminPort);
+
+	var result = this.api.domain,
+		port = (secure ? this.constants.adminPort : this.constants.port);
+
+	if (port != '80') {
+		result += ':' + port;
+	}
+
+	return result;
 };
 
 this.writeError = function(response, errorCode, err) {
