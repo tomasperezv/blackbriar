@@ -17,12 +17,12 @@ this.timestamp = function() {
  */
 this.toDate = function(timestamp) {
 	var date = new Date(timestamp*1000),
-		hours = date.getHours(),
-		minutes = date.getMinutes(),
-		seconds = date.getSeconds(),
-		day = date.getDay() + 1,
-		month = date.getMonth() + 1,
-		year = date.getFullYear();
+		hours = String(date.getHours()),
+		minutes = String(date.getMinutes()),
+		seconds = String(date.getSeconds()),
+		day = String(date.getDay() + 1),
+		month = String(date.getMonth() + 1),
+		year = String(date.getFullYear());
 	return day + '/' + month + '/' + year + ' ' + (hours.length > 1 ? hours : '0' + hours) + ':' + (minutes.length > 1 ? minutes : '0' + minutes) + ':' + (seconds.length > 1 ? seconds : '0' + seconds);
 };
 
@@ -38,13 +38,13 @@ this.toDateRFC822 = function(timestamp) {
 	}
 
 	var date = new Date(timestamp),
-		day = date.getDay(),
-		hours = date.getHours(),
-		minutes = date.getMinutes(),
-		seconds = date.getSeconds(),
-		day = date.getDay(),
-		month = date.getMonth(),
-		year = date.getFullYear();
+		day = String(date.getDay()),
+		hours = String(date.getHours()),
+		minutes = String(date.getMinutes()),
+		seconds = String(date.getSeconds()),
+		day = String(date.getDay()),
+		month = String(date.getMonth()),
+		year = String(date.getFullYear());
 
 	var weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
 		months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
