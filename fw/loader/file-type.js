@@ -2,8 +2,9 @@
   * @author <tom@0x101.com>
   * @class FileType
   */
-function FileType(url) {
+function FileType(url, extraHeaders) {
 	this.url = url;
+	this.extraHeaders = extraHeaders;
 	this.properties = {};
 	this.header = {};
 	this.HTTPCode = 200;
@@ -18,6 +19,9 @@ FileType.prototype.getHTTPCode = function() {
 }
 
 FileType.prototype.getHeader = function() {
+	if (this.extraHeaders && typeof this.extraHeaders['compress'] !== 'undefined' && this.extraHeaders['compress']) {
+		this.header['Content-Encoding'] = 'gzip';
+	}
 	return this.header;
 }
 
@@ -37,9 +41,9 @@ FileType.prototype.create = function() {
  * @author <tom@0x101.com>
  * @class FileTypeJavascript
  */
-function FileTypeJavascript(url) {
+function FileTypeJavascript(url, extraHeaders) {
 
-	FileType.call(this, url);
+	FileType.call(this, url, extraHeaders);
 
 	this.elementName = "script";
 	this.properties = {
@@ -56,9 +60,9 @@ FileTypeJavascript.prototype = new FileType();
  * @author <tom@0x101.com>
  * @class FileTypeCSS
  */
-function FileTypeCSS(url) {
+function FileTypeCSS(url, extraHeaders) {
 
-	FileType.call(this, url);
+	FileType.call(this, url, extraHeaders);
 
 	this.elementName = "link";
 	this.properties = {

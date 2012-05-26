@@ -45,9 +45,17 @@ this.serveRequest = function(request, response) {
 		if ( templateConfig !== null) {
 			ServerCore.serveTemplate(filename, templateConfig, response, slugInfo);
 		} else {
-			ServerCore.serve(filename, response, slugInfo);
+			ServerCore.serve(filename, response, slugInfo, this.canServeCompressed(request));
 		}
 	}
+};
+
+this.canServeCompressed = function(request) {
+	var canServeCompressed = false;
+	if (typeof request.headers['accept-encoding'] !== 'undefined') {
+		canServeCompressed = request.headers['accept-encoding'].indexOf('gzip') >= 0;
+	}
+	return canServeCompressed;
 };
 
 this.getTemplateConfig = function(request, filename, section) {

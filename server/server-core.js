@@ -6,6 +6,7 @@
 var fs = require('fs'),
 	url = require("url"),
 	path = require("path"),
+	gzip = require('compress'),
 	FileTypeFactory = require("../fw/loader/file-type-factory.js").FileTypeFactory,
 	FileTypeJavascript = require("../fw/loader/file-type.js").FileTypeJavascript,
 	FileTypeCSS = require("../fw/loader/file-type.js").FileTypeCSS,
@@ -22,9 +23,9 @@ this.constants = Config.get('server');
 this.allowedExtensions = Config.get('allowed-extensions'); 
 this.api = Config.get('api');
 
-this.writeHeader = function(response, filename) {
+this.writeHeader = function(response, filename, compress) {
 	var fileTypeFactory = new FileTypeFactory();
-	var fileType = fileTypeFactory.getFileType(filename); 
+	var fileType = fileTypeFactory.getFileType(filename, {compress:compress}); 
 	response.writeHead(fileType.getHTTPCode(), fileType.getHeader());
 };
 
@@ -130,15 +131,25 @@ this.serveTemplate = function(fileName, config, response, slugInfo) {
 	}
 };
 
-this.serve = function(fileName, response, slugInfo) {
+this.writeStatic = function(response, content, fileName, compress) {
+	this.writeHeader(response, fileName, compress);
+	response.write(content, "binary");
+	response.end();
+};
+
+this.serve = function(fileName, response, slugInfo, compress) {
 
 	var self = this;
 
-	if (this.constants.staticCache && typeof this.staticCache[fileName] !== 'undefined') {
+	if (typeof compress === 'undefined') {
+		var compress = false;
+	}
+
+	var cacheKey = compress ? fileName + '.gzip' : fileName;
+
+	if (this.constants.staticCache && typeof this.staticCache[cacheKey] !== 'undefined') {
 		Logger.logMessage('reading from cache ' + fileName);
-		this.writeHeader(response, fileName);
-		response.write(this.staticCache[fileName], "binary");
-		response.end();
+		this.writeStatic(response, this.staticCache[cacheKey], fileName, compress);
 	} else {
 
 		path.exists(fileName, function(exists) {
@@ -158,22 +169,25 @@ this.serve = function(fileName, response, slugInfo) {
 				} else if ( self.canServe(fileName) ) {
 	
 					try {
-	
-						Logger.logMessage('Routing request for ' + fileName);
-	
-						self.writeHeader(response, fileName);
-	
-						response.write(file, "binary");
-						self.staticCache[fileName] = file;
+						Logger.logMessage('Routing request for ' + fileName + ', compress=' + compress);
+						// If the cache is enabled, store the file there.
+						if (self.constants.staticCache) {
+							if (compress) {
+								// Compress the content if needed
+								var compressor = new gzip.Gzip();
+								compressor.init();
+								file = compressor.deflate(file, 'binary'); 
+								file += compressor.end();
+							}
+							self.staticCache[cacheKey] = file;
+						}
+
+						self.writeStatic(response, file, fileName, compress);
 	
 					} catch (Error) {
-	
 						Logger.logError(Error);
-	
 						self.writeHeader(response, self.constants.defaultDocument);
-	
 						response.write(file, "binary");
-	
 					}
 		
 				} else {

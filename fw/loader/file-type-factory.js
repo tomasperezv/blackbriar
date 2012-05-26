@@ -17,21 +17,21 @@ var FileTypeFactory = function() {
 	/**
 	 * @author <tom@0x101.com>
 	 */
-	this.getFileType = function(filename) {
+	this.getFileType = function(filename, extraHeaders) {
 
 		var fileType = null;
 
 		switch (filename.split('.').pop().toLowerCase()) {
 			case this.JAVASCRIPT: {
-				fileType = new FileTypeJavascript(filename);
+				fileType = new FileTypeJavascript(filename, extraHeaders);
 				break;
 			}
 			case this.CSS: {
-				fileType = new FileTypeCSS(filename);
+				fileType = new FileTypeCSS(filename, extraHeaders);
 				break;
 			}
 			default: {
-				fileType = new FileType(filename);
+				fileType = new FileType(filename, extraHeaders);
 				break;
 			}
 		}
@@ -44,4 +44,3 @@ var FileTypeFactory = function() {
 if (typeof exports !== 'undefined') {
 	exports.FileTypeFactory = FileTypeFactory;
 }
-
