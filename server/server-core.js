@@ -24,8 +24,9 @@ this.allowedExtensions = Config.get('allowed-extensions');
 this.api = Config.get('api');
 
 this.writeHeader = function(response, filename, compress) {
-	var fileTypeFactory = new FileTypeFactory();
-	var fileType = fileTypeFactory.getFileType(filename, {compress:compress}); 
+	var fileTypeFactory = new FileTypeFactory(),
+		extraHeaders = this.constants.staticCache ? {compress:compress} : {},
+		fileType = fileTypeFactory.getFileType(filename, extraHeaders); 
 	response.writeHead(fileType.getHTTPCode(), fileType.getHeader());
 };
 
