@@ -81,49 +81,53 @@ this.writeError = function(response, errorCode, err) {
 	response.write(content);
 };
 
+this.writeTemplateResponse = function(response, templateContent, requestData) {
+	var self = this;
+
+	// Get template data
+	Controller.processData(requestData.config, requestData.slugInfo, function(data) {
+
+		self.writeHeader(response, requestData.templateName);
+
+		var template = Handlebars.compile(templateContent, {noEscape: true}),
+			output = template(data);
+
+		response.write(output, "binary");
+
+		response.end();
+	});
+};
+
 this.serveTemplate = function(fileName, config, response, slugInfo) {
 
-	var ServerCore = this;
-
-	var templateName = 'www/' + config['folder'] + config['templates'][0];
+	var self = this,
+		templateName = 'www/' + config['folder'] + config['templates'][0];
 
 	if (this.constants.staticCache && typeof this.staticCache[templateName] !== 'undefined') {
-
 		Logger.logMessage('reading template from cache ' + templateName);
-		this.writeHeader(response, templateName);
-		var template = Handlebars.compile(this.staticCache[templateName]);
-
 		// Get template data
-		var data = Controller.processData(config, slugInfo);
-		var output = template(data);
-		response.write(output, "binary");
-		response.end();
+		this.writeTemplateResponse(response, 
+		this.staticCache[templateName],
+		{ config: config, templateName: templateName, slugInfo: slugInfo});
 
 	} else {
-		fs.readFile(templateName, "binary", function(err, template) {
+		// We need to read the template from the filesystem
+		fs.readFile(templateName, "binary", function(err, templateContent) {
 			if (err) {
 				Logger.logMessage('Template not found');
 			} else {
 				Logger.logMessage('serving template ' + templateName);
 
-				ServerCore.staticCache[templateName] = template;
-	
-				// Get template data
-				Controller.processData(config, slugInfo, function(data) {
+				if (self.constants.staticCache) {
+					// Store the template in the cache
+					self.staticCache[templateName] = templateContent;
+				}
 
-					ServerCore.writeHeader(response, templateName);
-		
-					var template = Handlebars.compile(ServerCore.staticCache[templateName], {noEscape: true}),
-						output = template(data);
-		
-					response.write(output, "binary");
-		
-					response.end();
-				});
+				self.writeTemplateResponse(response, templateContent,
+				{ config: config, templateName: templateName, slugInfo: slugInfo});
 			}
 		});
 	}
-
 };
 
 this.serve = function(fileName, response, slugInfo) {
