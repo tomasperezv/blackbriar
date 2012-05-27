@@ -52,7 +52,7 @@ this.serveRequest = function(request, response) {
 
 this.canServeCompressed = function(request) {
 	var canServeCompressed = false;
-	if (typeof request.headers['accept-encoding'] !== 'undefined') {
+	if (this.config.server['staticCache'] && typeof request.headers['accept-encoding'] !== 'undefined') {
 		canServeCompressed = request.headers['accept-encoding'].indexOf('gzip') >= 0;
 	}
 	return canServeCompressed;

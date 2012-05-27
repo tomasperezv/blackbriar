@@ -94,7 +94,7 @@ this.writeTemplateResponse = function(response, templateContent, requestData) {
 		var template = Handlebars.compile(templateContent, {noEscape: true}),
 			output = template(data);
 
-		response.write(output, "binary");
+		response.write(output, "utf-8");
 
 		response.end();
 	});
