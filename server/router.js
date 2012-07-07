@@ -17,7 +17,7 @@ this.config = {
 	templates: Config.get('templates')
 }
 
-this.REGEX_DOMAIN = /[a-z0-9.]*/i;
+this.REGEX_DOMAIN = /[a-z0-9.\-]*/i;
 this.REGEX_PORT = /:[\d]*/;
 this.REGEX_SLUG = /\/([0-9\-a-z]*)\/([0-9\-a-z]*)/i;
 this.REGEX_SLUG_SIMPLE = /\/[0-9\-a-z]*\/[0-9\-a-z]*/i;
