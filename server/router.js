@@ -2,7 +2,7 @@
   * @author <tom@0x101.com>
   * @class Router
   */
-var	path = require("path"),
+var path = require("path"),
 	fs = require('fs'),
 	ServerCore = require("./server-core.js"),
 	Config = require("./config.js"),
@@ -206,6 +206,52 @@ this.getPort = function(request) {
 
 this.devMode = function(request) {
 	return this.config.server.dev;
+};
+
+/**
+ * Apply websockets support to the httpServer.
+ *
+ * In order to communicate with the API, the client can send a
+ * JSON encoded request, like:
+ *
+ * {'section': 'geo-twitter', 'action': 'get-tweets', 'params': {param1: '', param2: , ...}}
+ *
+ * @see https://github.com/Worlize/WebSocket-Node/
+ * @param {HttpServer} httpServer
+ * @param {WebSocketServer} webSocketServer
+ */
+this.startWebSocket = function(httpServer, webSocketServer) {
+
+	var self = this;
+	webSocketServer.on('request', function(request) {
+
+		var connection = request.accept('blackbriar-0.1', request.origin);
+		connection.on('message', function(message) {
+			Logger.logMessage('Websocket connection type ' + message.type);
+			if (typeof message.utf8Data !== 'undefined') {
+				try {
+					console.log(message.utf8Data);
+					var request = JSON.parse(message.utf8Data);
+					self._routeWebSocketRequest(request, connection);
+				} catch(e) {
+					// do nothing
+					Logger.logMessage('Unknown type of websocket request');
+				}
+			}
+		});
+
+	});
+};
+
+/**
+ * @param {Object} webSocketRequest
+ * 		webSocketRequest.section {String}
+ * 		webSocketRequest.action {String}
+ * 		webSocketRequest.params {Object}
+ */
+this._routeWebSocketRequest = function(webSocketRequest, connection) {
+	Logger.logMessage('Routing websocket request');
+	Api.serve(webSocketRequest, connection);
 };
 
 this._getSection = function(domainInfo) {

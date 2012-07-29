@@ -7,7 +7,8 @@ var http = require("http"),
 	fs = require('fs'),
 	Config = require("./server/config.js"),
 	Router = require('./server/router.js'),
-	Logger = require('./server/logger/logger').Logger.get();
+	Logger = require('./server/logger/logger').Logger.get(),
+	WebSocketServer = require('websocket').server;
 
 /**
  * Config options
@@ -20,11 +21,11 @@ var options = {
 var serverConf = Config.get('server');
 
 /**
- * HTTP server 
+ * HTTP server
  */
-http.createServer(function(request, response) {
+var httpServer = http.createServer(function(request, response) {
 
-	Router.serveRequest(request, response);	
+	Router.serveRequest(request, response);
 
 }).listen( serverConf.port );
 
@@ -35,8 +36,23 @@ Logger.logMessage("HTTP server running at " + serverConf.port + " port.");
  */
 https.createServer(options, function (request, response) {
 
-	Router.serveRequest(request, response);	
+	Router.serveRequest(request, response);
 
 }).listen( serverConf.adminPort );
 
 Logger.logMessage("SSL server running at " + serverConf.adminPort + " port.");
+
+/**
+ * Websockets server
+ */
+if (serverConf['websockets']) {
+
+	var webSocketsServer = new WebSocketServer({
+		httpServer: httpServer,
+		autoAcceptConnections: false
+	});
+
+	Router.startWebSocket(httpServer, webSocketsServer);
+
+	Logger.logMessage("Websockets support enabled");
+}
