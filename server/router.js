@@ -230,7 +230,6 @@ this.startWebSocket = function(httpServer, webSocketServer) {
 			Logger.logMessage('Websocket connection type ' + message.type);
 			if (typeof message.utf8Data !== 'undefined') {
 				try {
-					console.log(message.utf8Data);
 					var request = JSON.parse(message.utf8Data);
 					self._routeWebSocketRequest(request, connection);
 				} catch(e) {
