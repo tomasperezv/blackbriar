@@ -26,6 +26,7 @@
 // By default selecting the postgre sql connector.
 var DataBaseFactory = require('../database/database-factory'),
 	DataBaseFormat = require('../database/database-format'),
+	cache = require('./cache'),
 	Logger = require('../logger/logger').Logger.get('console');
 
 this.databaseType = DataBaseFactory.POSTGRE;
@@ -35,6 +36,9 @@ DataBaseModel = function() {
 	this.table = '';
 	this.lastQuery = '';
 	this.data = [];
+	
+	// Store a reference to the cache strategy layer
+	this.cache = cache.CacheStrategy;
 
 };
 
@@ -71,19 +75,37 @@ DataBaseModel.prototype.load = function(filters, onSuccess, maxItems, orderBy, o
 	if (typeof filters === 'undefined') {
 		var filters = {};
 	}
+
+	// First try to retrieve the data from the cache layer
+	var cacheKey = this.cache.getKey(this.table, filters);
+	var cachedData = this.cache.get(cacheKey);
+
+	if (cachedData === null) {
+
+		// The data is not stored in the cache, we need to perform the DB query
+		this.lastQuery = this.getLoadQuery(filters, maxItems, orderBy, offset);
+
+		Logger.logQuery(this.lastQuery);
+
+		var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
+
+		var model = this;
+
+		dataBaseConnection.select(this.lastQuery, function(rows) {
+			// Store the result in the cache
+			model.cache.set(cacheKey, rows);
+
+			model.data = rows;
+			onSuccess(model);
+
+		});
+
+	} else {
+		this.data = cachedData;
+		onSuccess(this);
+	}
+
 	
-	this.lastQuery = this.getLoadQuery(filters, maxItems, orderBy, offset);
-
-	Logger.logQuery(this.lastQuery);
-
-	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
-
-	var model = this;
-
-	dataBaseConnection.select(this.lastQuery, function(rows) {
-		model.data = rows;
-		onSuccess(model);
-	});
 };
 
 /**
@@ -150,14 +172,34 @@ DataBaseModel.prototype.remove = function(data, onSuccess) {
 };
 
 DataBaseModel.prototype.count = function(filters, onSuccess) {
-	this.lastQuery = this.getCountQuery(filters);
-	Logger.logQuery(this.lastQuery);
 
-	var dataBaseConnection = DataBaseFactory.get(this.databaseType);  
-	dataBaseConnection.select(this.lastQuery, function(rows) {
-		var count = rows.length > 0 ? rows[0].count : 0;
-		onSuccess(count);
-	});
+	// First try to retrieve the data from the cache layer
+	var cacheKey = this.cache.getKey(this.table + '_count', filters);
+	var cachedData = this.cache.get(cacheKey);
+
+	if (cachedData === null) {
+
+		this.lastQuery = this.getCountQuery(filters);
+		Logger.logQuery(this.lastQuery);
+
+		var self = this;
+
+		var dataBaseConnection = DataBaseFactory.get(this.databaseType);
+		dataBaseConnection.select(this.lastQuery, function(rows) {
+
+			var count = rows.length > 0 ? rows[0].count : 0;
+
+			// Store the result in cache
+			self.cache.set(cacheKey, count);
+
+			onSuccess(count);
+
+		});
+
+	} else {
+		onSuccess(cachedData);
+	}
+
 }
 
 /**
