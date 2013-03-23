@@ -5,7 +5,6 @@
 
 var fs = require('fs'),
 	url = require("url"),
-	path = require("path"),
 	gzip = require('compress'),
 	FileTypeFactory = require("../fw/loader/file-type-factory.js").FileTypeFactory,
 	FileTypeJavascript = require("../fw/loader/file-type.js").FileTypeJavascript,
@@ -153,7 +152,7 @@ this.serve = function(fileName, response, slugInfo, compress) {
 		this.writeStatic(response, this.staticCache[cacheKey], fileName, compress);
 	} else {
 
-		path.exists(fileName, function(exists) {
+		fs.exists(fileName, function(exists) {
 	
 			if(!exists) {
 				self.writeError(response, self.constants.notFound);
