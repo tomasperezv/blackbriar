@@ -28,6 +28,8 @@ this.REGEX_SLUG_PREFIX = /^\/[\-a-z0-9]*\//i;
  */
 this.serveRequest = function(request, response) {
 
+	Logger.logMessage('Request from ' + request.headers['referer'] + ' ' + request.headers['user-agent'] + ' ' + request.connection.remoteAddress);
+
 	if (this.isApiRequest(request)) {
 
 		Logger.logMessage('Api request...');
