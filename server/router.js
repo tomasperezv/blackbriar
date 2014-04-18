@@ -14,8 +14,9 @@ this.config = {
 	allowedFolders: Config.get('allowed-folders'),
 	server: Config.get('server'),
 	api: Config.get('api'),
-	templates: Config.get('templates')
-}
+	templates: Config.get('templates'),
+	reverseProxy: Config.get('reverse-proxy')
+};
 
 this.REGEX_DOMAIN = /[a-z0-9.\-]*/i;
 this.REGEX_PORT = /:[\d]*/;
@@ -31,10 +32,13 @@ this.serveRequest = function(request, response) {
 	Logger.logMessage('Request from ' + request.headers['referer'] + ' ' + request.headers['user-agent'] + ' ' + request.connection.remoteAddress);
 
 	if (this.isApiRequest(request)) {
-
 		Logger.logMessage('Api request...');
 		Api.serve(request, response);
-
+	} else if (this.isReverseProxyRequest(request)) {
+		Logger.logMessage('Reverse proxy request...');
+		var httpProxy = require('http-proxy');
+		var proxy = httpProxy.createProxyServer({});
+		proxy.web(request, response, { target: 'http://localhost:8080' });
 	} else {
 
 		var filename = this.getFileName(request),
@@ -102,6 +106,18 @@ this.getBaseTemplateConfig = function(section, sectionPath, basename, requireSec
 
 this.isApiRequest = function(request) {
 	return this.getDomain(request) === this.config.api.domain;
+};
+
+this.isReverseProxyRequest = function(request) {
+	var isReverseProxy = false;
+	var config = this.config.reverseProxy;
+	for (var i = 0; i < config.length; i++) {
+		if (this.getDomain(request) === config[i].host) {
+			isReverseProxy = true;
+			break;
+		}
+	}
+	return isReverseProxy;
 };
 
 this.parseDomain = function(domain) {
