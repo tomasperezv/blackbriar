@@ -18,6 +18,12 @@ this.config = {
 	reverseProxy: Config.get('reverse-proxy')
 };
 
+/**
+ * Dictionary that caches the reverse proxy configuration for request domain.
+ * @var {Object} reverseProxyConfig
+ */
+this.reverseProxyConfig = {};
+
 this.REGEX_DOMAIN = /[a-z0-9.\-]*/i;
 this.REGEX_PORT = /:[\d]*/;
 this.REGEX_SLUG = /\/([0-9\-a-z]*)\/([0-9\-a-z]*)/i;
@@ -35,10 +41,15 @@ this.serveRequest = function(request, response) {
 		Logger.logMessage('Api request...');
 		Api.serve(request, response);
 	} else if (this.isReverseProxyRequest(request)) {
-		Logger.logMessage('Reverse proxy request...');
+		var config = this.getReverseProxyConfig(request);
+		var protocol = request.connection.encrypted ? 'https://' : 'http://';
+		var internalTarget = protocol + 'localhost:' + config.port;
+		Logger.logMessage('Reverse proxy request to ' + internalTarget + ' ' + config.name);
 		var httpProxy = require('http-proxy');
 		var proxy = httpProxy.createProxyServer({});
-		proxy.web(request, response, { target: 'http://localhost:8080' });
+		proxy.web(request, response, {
+			target: internalTarget
+		});
 	} else {
 
 		var filename = this.getFileName(request),
@@ -108,14 +119,33 @@ this.isApiRequest = function(request) {
 	return this.getDomain(request) === this.config.api.domain;
 };
 
+this.getReverseProxyConfig = function(request) {
+
+	var domain = this.getDomain(request);
+	var reverseProxyConfig = null;
+
+	if (typeof this.reverseProxyConfig[domain] !== 'undefined') {
+		reverseProxyConfig = this.reverseProxyConfig[domain];
+	} else {
+		var config = this.config.reverseProxy;
+		for (var i = 0; i < config.length; i++) {
+			if (this.getDomain(request) === config[i].host) {
+				reverseProxyConfig = config[i];
+				// Cache so we don't need to iterate on the configuration again
+				this.reverseProxyConfig[domain] = reverseProxyConfig;
+				break;
+			}
+		}
+	}
+
+	return reverseProxyConfig;
+
+};
+
 this.isReverseProxyRequest = function(request) {
 	var isReverseProxy = false;
-	var config = this.config.reverseProxy;
-	for (var i = 0; i < config.length; i++) {
-		if (this.getDomain(request) === config[i].host) {
-			isReverseProxy = true;
-			break;
-		}
+	if (this.getReverseProxyConfig(request) !== null) {
+		isReverseProxy = true;
 	}
 	return isReverseProxy;
 };
