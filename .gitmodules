@@ -1,1 +1,3 @@
-
+[submodule "node-postgre-orm"]
+	path = node-postgre-orm
+	url = git@github.com:tomasperezv/node-postgre-orm.git
