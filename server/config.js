@@ -13,12 +13,12 @@ this.loadConfig = function(domain) {
 	var filename = this.getFullFileName(domain);
 
 	try {
-		// We want to merge and override what we defined in the config dev. file	
+		// We want to merge and override what we defined in the config dev. file
 		var data = JSON.parse(fs.readFileSync(filename, 'utf8'));
 		var dataDev = JSON.parse(fs.readFileSync(configFileName, 'utf8'));
 
 		for (var property in dataDev) {
-			data[property] = dataDev[property];			
+			data[property] = dataDev[property];
 		}
 
 	} catch(e) {
@@ -44,7 +44,7 @@ this.CONFIGURATION_FOLDER = './config/';
 
 this.configDomains = [];
 
-this.domains = ['domains', 'allowed-folders', 'server', 'api', 'allowed-extensions', 'templates', 'database', 'geo-twitter'];
+this.domains = ['domains', 'allowed-folders', 'server', 'api', 'allowed-extensions', 'templates', 'database', 'geo-twitter', 'reverse-proxy'];
 var nDomains = this.domains.length;
 for (var i = 0; i < nDomains; i++) {
 	var currentDomain = this.domains[i];
