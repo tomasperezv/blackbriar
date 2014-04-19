@@ -3,8 +3,7 @@
 	"version": "0.0.2",
 	"author": "Tomas Perez <tom@0x101.com>",
 	"dependencies": {
-		"nodeunit": "*",
-		"compress": "git+ssh://git://github.com/elliotttf/node-compress.git"
+		"nodeunit": "*"
 	},
 	"engine": {
 		"node": ">0.5"
