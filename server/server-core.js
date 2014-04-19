@@ -4,17 +4,17 @@
   */
 
 var fs = require('fs'),
-	url = require("url"),
-	gzip = require('compress'),
-	FileTypeFactory = require("../fw/loader/file-type-factory.js").FileTypeFactory,
-	FileTypeJavascript = require("../fw/loader/file-type.js").FileTypeJavascript,
-	FileTypeCSS = require("../fw/loader/file-type.js").FileTypeCSS,
-	FileType = require("../fw/loader/file-type.js").FileType,
-	Config = require("./config.js"),
-	Handlebars = require('handlebars'),
-	Controller = require('../www/controller.js'),
-	Router = require('./router.js'),
-	Logger = require('./logger/logger').Logger.get();
+		url = require("url"),
+		zlib = require('zlib'),
+		FileTypeFactory = require("../fw/loader/file-type-factory.js").FileTypeFactory,
+		FileTypeJavascript = require("../fw/loader/file-type.js").FileTypeJavascript,
+		FileTypeCSS = require("../fw/loader/file-type.js").FileTypeCSS,
+		FileType = require("../fw/loader/file-type.js").FileType,
+		Config = require("./config.js"),
+		Handlebars = require('handlebars'),
+		Controller = require('../www/controller.js'),
+		Router = require('./router.js'),
+		Logger = require('./logger/logger').Logger.get();
 
 this.staticCache = [];
 
@@ -24,7 +24,7 @@ this.api = Config.get('api');
 
 this.writeHeader = function(response, filename, compress) {
 	var fileTypeFactory = new FileTypeFactory(),
-		extraHeaders = this.constants.staticCache ? {compress:compress} : {},
+		extraHeaders = this.useCache(filename) ? {compress:compress} : {},
 		fileType = fileTypeFactory.getFileType(filename, extraHeaders); 
 	response.writeHead(fileType.getHTTPCode(), fileType.getHeader());
 };
@@ -99,12 +99,18 @@ this.writeTemplateResponse = function(response, templateContent, requestData) {
 	});
 };
 
+this.useCache = function(filename) {
+	var extension = filename.split('.').pop().toLowerCase();
+	return (this.constants.staticCache.indexOf(extension) > -1);
+};
+
 this.serveTemplate = function(fileName, config, response, slugInfo) {
 
 	var self = this,
+		useCache = this.useCache(fileName),
 		templateName = 'www/' + config['folder'] + config['templates'][0];
 
-	if (this.constants.staticCache && typeof this.staticCache[templateName] !== 'undefined') {
+	if (useCache && typeof this.staticCache[templateName] !== 'undefined') {
 		Logger.logMessage('reading template from cache ' + templateName);
 		// Get template data
 		this.writeTemplateResponse(response, 
@@ -119,7 +125,7 @@ this.serveTemplate = function(fileName, config, response, slugInfo) {
 			} else {
 				Logger.logMessage('serving template ' + templateName);
 
-				if (self.constants.staticCache) {
+				if (useCache) {
 					// Store the template in the cache
 					self.staticCache[templateName] = templateContent;
 				}
@@ -145,9 +151,10 @@ this.serve = function(fileName, response, slugInfo, compress) {
 		var compress = false;
 	}
 
-	var cacheKey = compress ? fileName + '.gzip' : fileName;
+	var cacheKey = compress ? fileName + '.gzip' : fileName,
+			useCache = this.useCache(fileName);
 
-	if (this.constants.staticCache && typeof this.staticCache[cacheKey] !== 'undefined') {
+	if (useCache && typeof this.staticCache[cacheKey] !== 'undefined') {
 		Logger.logMessage('reading from cache ' + fileName);
 		this.writeStatic(response, this.staticCache[cacheKey], fileName, compress);
 	} else {
@@ -161,7 +168,7 @@ this.serve = function(fileName, response, slugInfo, compress) {
 			}
 				
 			fs.readFile(fileName, "binary", function(err, file) {
-		
+
 				if(err) {
 		
 					self.writeError(response, self.constants.serverError, err);
@@ -171,18 +178,20 @@ this.serve = function(fileName, response, slugInfo, compress) {
 					try {
 						Logger.logMessage('Routing request for ' + fileName + ', compress=' + compress);
 						// If the cache is enabled, store the file there.
-						if (self.constants.staticCache) {
+						if (useCache) {
 							if (compress) {
-								// Compress the content if needed
-								var compressor = new gzip.Gzip();
-								compressor.init();
-								file = compressor.deflate(file, 'binary'); 
-								file += compressor.end();
+								zlib.gzip(file, function(err, result) {
+									self.staticCache[cacheKey] = result;
+									self.writeStatic(response, result, fileName, true);
+									response.end();
+								});
+							} else {
+								self.staticCache[cacheKey] = file;
+								self.writeStatic(response, file, fileName);
 							}
-							self.staticCache[cacheKey] = file;
+						} else {
+							self.writeStatic(response, file, fileName, compress);
 						}
-
-						self.writeStatic(response, file, fileName, compress);
 	
 					} catch (Error) {
 						Logger.logError(Error);
@@ -194,9 +203,7 @@ this.serve = function(fileName, response, slugInfo, compress) {
 					Logger.logMessage('Trying to access to forbidden extension: ' + fileName);
 					self.writeError(response, self.constants.forbidden);
 				}
-		
-				response.end();
-		
+
 			});
 		});
 	}
