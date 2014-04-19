@@ -9,6 +9,10 @@ var path = require("path"),
 	Api = require("../www/api.js"),
 	Logger = require('./logger/logger').Logger.get();
 
+/**
+ * Store the needed configuration
+ * @var {Object} config
+ */
 this.config = {
 	domains: Config.get('domains'),
 	allowedFolders: Config.get('allowed-folders'),
@@ -31,7 +35,10 @@ this.REGEX_SLUG_SIMPLE = /\/[0-9\-a-z]*\/[0-9\-a-z]*/i;
 this.REGEX_SLUG_PREFIX = /^\/[\-a-z0-9]*\//i;
 
 /**
- * @author tom@0x101.com
+ * @param {Request} request
+ * @param {Response} response
+ * @method serveRequest
+ * @public
  */
 this.serveRequest = function(request, response) {
 
@@ -67,6 +74,12 @@ this.serveRequest = function(request, response) {
 	}
 };
 
+/**
+ * @param {Request} request
+ * @return {Boolean}
+ * @method canServeCompressed
+ * @public
+ */
 this.canServeCompressed = function(request) {
 	var canServeCompressed = false;
 	if (this.config.server['staticCache'] && typeof request.headers['accept-encoding'] !== 'undefined') {
@@ -75,6 +88,14 @@ this.canServeCompressed = function(request) {
 	return canServeCompressed;
 };
 
+/**
+ * @param {Request} request
+ * @param {String} filename
+ * @param {String} section
+ * @return {Object} templateConfig
+ * @method getTemplateConfig
+ * @public
+ */
 this.getTemplateConfig = function(request, filename, section) {
 
 	var domain = this.getDomain(request),
@@ -97,6 +118,13 @@ this.getTemplateConfig = function(request, filename, section) {
 	return config;
 };
 
+/**
+ * @param {String} filename
+ * @param {String} section
+ * @return {Object} templateConfig
+ * @method getBaseTemplateConfig
+ * @public
+ */
 this.getBaseTemplateConfig = function(section, sectionPath, basename, requireSection) {
 
 	if (typeof requireSection === 'undefined') {
@@ -115,10 +143,22 @@ this.getBaseTemplateConfig = function(section, sectionPath, basename, requireSec
 	return config;
 };
 
+/**
+ * @param {Request} request
+ * @return {Boolean}
+ * @method isApiRequest
+ * @public
+ */
 this.isApiRequest = function(request) {
 	return this.getDomain(request) === this.config.api.domain;
 };
 
+/**
+ * @param {Request} request
+ * @return {Object|null}
+ * @method getReverseProxyConfig
+ * @public
+ */
 this.getReverseProxyConfig = function(request) {
 
 	var domain = this.getDomain(request);
@@ -142,6 +182,12 @@ this.getReverseProxyConfig = function(request) {
 
 };
 
+/**
+ * @param {Request} request
+ * @return {Boolean}
+ * @method isReverseProxyRequest
+ * @public
+ */
 this.isReverseProxyRequest = function(request) {
 	var isReverseProxy = false;
 	if (this.getReverseProxyConfig(request) !== null) {
@@ -150,6 +196,12 @@ this.isReverseProxyRequest = function(request) {
 	return isReverseProxy;
 };
 
+/**
+ * @param {String} domain
+ * @return {Object}
+ * @method parseDomain
+ * @public
+ */
 this.parseDomain = function(domain) {
 	var result = null;
 
@@ -179,6 +231,9 @@ this.parseDomain = function(domain) {
 /**
  * Returns the real path of the file that we want to serve, depending on the
  * domains.json file
+ * @param {Request} request
+ * @method getFileName
+ * @public
  */
 this.getFileName = function(request) {
 
@@ -204,6 +259,14 @@ this.getFileName = function(request) {
 	return this._generateFileName(url, section);
 };
 
+/**
+ * @param {String} url
+ * @param {Object} domainInfo
+ * @param {Boolean} removeSlug
+ * @return {String} url
+ * @method _removeSlugPrefix
+ * @private
+ */
 this._removeSlugPrefix = function(url, domainInfo, removeSlug) {
 
 	if (typeof removeSlug === 'undefined') {
@@ -223,6 +286,13 @@ this._removeSlugPrefix = function(url, domainInfo, removeSlug) {
 	return url;
 };
 
+/**
+ * @param {String} url
+ * @param {Object} domainInfo
+ * @return {Object}
+ * @method getSlugInfo
+ * @public
+ */
 this.getSlugInfo = function(url, domainInfo) {
 
 	url = this._removeSlugPrefix(url, domainInfo);
@@ -237,10 +307,22 @@ this.getSlugInfo = function(url, domainInfo) {
 	return parts;
 };
 
+/**
+ * @param {Request} request
+ * @method getDomain
+ * @return {String}
+ * @public
+ */
 this.getDomain = function(request) {
 	return this._regexDomain(request, this.REGEX_DOMAIN);
 };
 
+/**
+ * @param {Request} request
+ * @method getPort
+ * @return {String}
+ * @public
+ */
 this.getPort = function(request) {
 	var result = this._regexDomain(request, this.REGEX_PORT),
 		port = null;
@@ -252,6 +334,12 @@ this.getPort = function(request) {
 	return port;
 };
 
+/**
+ * @param {Request} request
+ * @method devMode
+ * @return {Boolean}
+ * @public
+ */
 this.devMode = function(request) {
 	return this.config.server.dev;
 };
@@ -267,6 +355,8 @@ this.devMode = function(request) {
  * @see https://github.com/Worlize/WebSocket-Node/
  * @param {HttpServer} httpServer
  * @param {WebSocketServer} webSocketServer
+ * @method startWebSocket
+ * @public
  */
 this.startWebSocket = function(httpServer, webSocketServer) {
 
@@ -295,16 +385,30 @@ this.startWebSocket = function(httpServer, webSocketServer) {
  * 		webSocketRequest.section {String}
  * 		webSocketRequest.action {String}
  * 		webSocketRequest.params {Object}
+ * @method _routeWebSocketRequest
+ * @private
  */
 this._routeWebSocketRequest = function(webSocketRequest, connection) {
 	Logger.logMessage('Routing websocket request');
 	Api.serve(webSocketRequest, connection);
 };
 
+/**
+ * @param {Object} domainInfo
+ * @method _getSection
+ * @private
+ */
 this._getSection = function(domainInfo) {
 	return domainInfo != null ? domainInfo.section : '';
 };
 
+/**
+ * @param {Request} request
+ * @param {Object} request
+ * @return {String}
+ * @method _regexDomain
+ * @private
+ */
 this._regexDomain = function(request, regex) {
 	var result = null,
 		requestUrl = request.headers['host'];
@@ -321,6 +425,13 @@ this._regexDomain = function(request, regex) {
 
 };
 
+/**
+ * @param {String} requestUrl
+ * @param {String} currentSection
+ * @return {String}
+ * @method _generateFileName
+ * @private
+ */
 this._generateFileName = function(requestUrl, currentSection) {
 	var filename = path.join(process.cwd(), 'www/' + currentSection);
 
