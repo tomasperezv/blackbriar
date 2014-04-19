@@ -14,6 +14,9 @@ this.portRequest = MockRequest.get();
 this.portRequest.headers.host = 'test.com:8000';
 this.portDomain = 'test.com';
 
+this.reverseProxyRequest = MockRequest.get();
+this.reverseProxyRequest.headers.host = 'reverse.com';
+
 // Router with a mocked config
 this.get = function() {
 	var Router = require("../../server/router.js");
@@ -39,6 +42,14 @@ this.get = function() {
 			}
 		]
 	}; 
+
+	Router.config.reverseProxy = [
+		{
+			"name": "test",
+			"host": "reverse.com",
+			"port": 8080
+		}
+	];
 
 	Router.config.allowedFolders = {
 		"main": "",

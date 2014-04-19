@@ -11,6 +11,16 @@ exports['isApiRequest'] = function (test) {
 	test.done();
 };
 
+exports['isReverseProxyRequest'] = function (test) {
+
+	test.strictEqual(Router.isReverseProxyRequest(mock.Request), false);
+	test.strictEqual(Router.isReverseProxyRequest(mock.apiRequest), false);
+	test.strictEqual(Router.isReverseProxyRequest(mock.emptyRequest), false);
+	test.strictEqual(Router.isReverseProxyRequest(mock.reverseProxyRequest), true);
+
+	test.done();
+};
+
 exports['getDomain'] = function(test) {
 
 	test.equal(Router.getDomain(mock.Request), mock.defaultDomain);
